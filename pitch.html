@@ -1,0 +1,1194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WHAT IF YOUTUBE PAUSED WHEN CLAUDE TALKED?</title>
+
+<!-- Fonts: Archivo Black (massive display) + Syne (weird-chic sub-display) + Space Mono (terminal accents) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Syne:wght@700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+/* ===========================================
+   THEME — acid-tabloid / YouTube-thumbnail energy
+   Swap these to re-skin the whole deck.
+   =========================================== */
+:root {
+    --bg-black: #0a0a0a;
+    --bg-cream: #faf6e8;
+    --acid: #f2ff00;
+    --pink: #ff2d7a;
+    --blue: #0030ff;
+    --ink: #0a0a0a;
+
+    --font-smash: 'Archivo Black', 'Impact', sans-serif;
+    --font-chic: 'Syne', sans-serif;
+    --font-mono: 'Space Mono', ui-monospace, monospace;
+}
+
+/* ===========================================
+   VIEWPORT BASE (mandatory — copied from viewport-base.css)
+   =========================================== */
+html, body { height: 100%; overflow-x: hidden; }
+html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+
+.slide {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.slide-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-height: 100%;
+    overflow: hidden;
+    padding: var(--slide-padding);
+}
+
+:root {
+    --title-size: clamp(2.5rem, 9vw, 9rem);
+    --h2-size: clamp(1.5rem, 5vw, 4rem);
+    --h3-size: clamp(1rem, 2.5vw, 1.75rem);
+    --body-size: clamp(0.85rem, 1.5vw, 1.15rem);
+    --small-size: clamp(0.65rem, 1vw, 0.875rem);
+    --slide-padding: clamp(1.25rem, 4vw, 4rem);
+    --content-gap: clamp(0.75rem, 2vw, 2rem);
+    --element-gap: clamp(0.25rem, 1vw, 1rem);
+}
+
+.card, .container, .content-box {
+    max-width: min(92vw, 1100px);
+    max-height: min(82vh, 760px);
+}
+.feature-list, .bullet-list { gap: clamp(0.4rem, 1vh, 1rem); }
+.feature-list li, .bullet-list li { font-size: var(--body-size); line-height: 1.4; }
+img, .image-container { max-width: 100%; max-height: min(50vh, 400px); object-fit: contain; }
+
+@media (max-height: 700px) {
+    :root {
+        --slide-padding: clamp(0.75rem, 3vw, 2rem);
+        --content-gap: clamp(0.4rem, 1.5vw, 1rem);
+        --title-size: clamp(2rem, 7vw, 5rem);
+        --h2-size: clamp(1.2rem, 3.5vw, 2.25rem);
+    }
+}
+@media (max-height: 600px) {
+    :root {
+        --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem);
+        --title-size: clamp(1.5rem, 6vw, 3.5rem);
+        --body-size: clamp(0.7rem, 1.2vw, 0.95rem);
+    }
+    .nav-dots, .keyboard-hint, .decorative { display: none; }
+}
+@media (max-height: 500px) {
+    :root {
+        --slide-padding: clamp(0.4rem, 2vw, 1rem);
+        --title-size: clamp(1.2rem, 5vw, 2rem);
+        --h2-size: clamp(0.9rem, 2.5vw, 1.25rem);
+    }
+}
+@media (max-width: 600px) {
+    :root { --title-size: clamp(1.8rem, 11vw, 4rem); }
+    .grid { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+    }
+    html { scroll-behavior: auto; }
+}
+
+/* ===========================================
+   BASE
+   =========================================== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: var(--font-chic);
+    background: var(--bg-black);
+    color: var(--bg-cream);
+    -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--acid); color: var(--ink); }
+
+/* ===========================================
+   REVEAL ANIMATIONS
+   =========================================== */
+.reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.slide.visible .reveal { opacity: 1; transform: translateY(0); }
+.slide.visible .reveal:nth-child(1) { transition-delay: 0.05s; }
+.slide.visible .reveal:nth-child(2) { transition-delay: 0.18s; }
+.slide.visible .reveal:nth-child(3) { transition-delay: 0.31s; }
+.slide.visible .reveal:nth-child(4) { transition-delay: 0.44s; }
+.slide.visible .reveal:nth-child(5) { transition-delay: 0.57s; }
+.slide.visible .reveal:nth-child(6) { transition-delay: 0.70s; }
+
+/* A twitchy "pop" for the hero text — viral thumbnail energy. */
+@keyframes pop-in {
+    0%   { transform: scale(0.6) rotate(-4deg); opacity: 0; }
+    60%  { transform: scale(1.08) rotate(1.5deg); opacity: 1; }
+    100% { transform: scale(1) rotate(-2deg); opacity: 1; }
+}
+.slide.visible .pop { animation: pop-in 0.8s cubic-bezier(0.2, 1.3, 0.4, 1) both; }
+
+@keyframes slow-spin { to { transform: rotate(360deg); } }
+@keyframes bob { 0%,100% { transform: translateY(0) rotate(var(--tilt, 0deg)); } 50% { transform: translateY(-8px) rotate(var(--tilt, 0deg)); } }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* ===========================================
+   HALFTONE / GRID TEXTURES
+   =========================================== */
+.halftone {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(var(--ink) 1.2px, transparent 1.3px);
+    background-size: 14px 14px;
+    opacity: 0.18;
+    pointer-events: none;
+}
+
+.grid-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+}
+
+/* ===========================================
+   PROGRESS + NAV
+   =========================================== */
+.progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 4px;
+    width: 0%;
+    background: var(--acid);
+    z-index: 100;
+    transition: width 0.15s linear;
+}
+.nav-dots {
+    position: fixed;
+    right: clamp(12px, 2vw, 24px);
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 50;
+}
+.nav-dots button {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: rgba(250, 246, 232, 0.25);
+    border: 0; padding: 0; cursor: pointer;
+    transition: background 0.3s, transform 0.3s;
+}
+.nav-dots button.active { background: var(--acid); transform: scale(1.4); }
+.nav-dots button:hover { background: var(--pink); }
+
+.slide-num {
+    position: absolute;
+    top: clamp(12px, 2vw, 24px);
+    left: clamp(16px, 3vw, 32px);
+    font-family: var(--font-mono);
+    font-size: clamp(0.7rem, 1vw, 0.9rem);
+    letter-spacing: 0.08em;
+    opacity: 0.55;
+    z-index: 10;
+}
+
+/* ===========================================
+   SLIDE 1 — TITLE
+   =========================================== */
+.s-title {
+    background:
+        radial-gradient(ellipse at 20% 30%, rgba(242,255,0,0.25) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 70%, rgba(255,45,122,0.25) 0%, transparent 55%),
+        var(--bg-black);
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.s-title .kicker {
+    font-family: var(--font-mono);
+    font-size: clamp(0.75rem, 1.1vw, 1rem);
+    letter-spacing: 0.3em;
+    color: var(--acid);
+    text-transform: uppercase;
+    padding: 8px 14px;
+    border: 1.5px solid var(--acid);
+    margin-bottom: var(--content-gap);
+}
+
+.s-title h1 {
+    font-family: var(--font-smash);
+    font-size: var(--title-size);
+    line-height: 0.88;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    max-width: min(92vw, 1400px);
+}
+
+.s-title h1 .hi-yellow { color: var(--acid); display: inline-block; }
+.s-title h1 .hi-pink   { color: var(--pink); display: inline-block; transform: rotate(-2deg); }
+.s-title h1 .box {
+    display: inline-block;
+    background: var(--acid);
+    color: var(--ink);
+    padding: 0.02em 0.15em;
+    transform: rotate(-1.2deg);
+}
+
+.s-title .sub {
+    margin-top: var(--content-gap);
+    font-family: var(--font-mono);
+    font-size: clamp(0.8rem, 1.3vw, 1.1rem);
+    letter-spacing: 0.1em;
+    opacity: 0.85;
+}
+
+/* Floating accent blobs */
+.blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(2px);
+    z-index: 1;
+}
+.blob-1 { width: clamp(80px, 10vw, 160px); aspect-ratio: 1; background: var(--pink); top: 12%; right: 10%; --tilt: -5deg; animation: bob 5s ease-in-out infinite; }
+.blob-2 { width: clamp(60px, 7vw, 110px); aspect-ratio: 1; background: var(--blue); bottom: 12%; left: 8%; --tilt: 8deg; animation: bob 4s ease-in-out infinite 0.6s; }
+
+/* ===========================================
+   SLIDE 2 — THE PAIN
+   =========================================== */
+.s-pain {
+    background: var(--pink);
+    color: var(--ink);
+    justify-content: center;
+}
+.s-pain .slide-content { gap: var(--content-gap); }
+.s-pain h2 {
+    font-family: var(--font-smash);
+    font-size: var(--title-size);
+    line-height: 0.9;
+    text-transform: uppercase;
+    max-width: min(90vw, 1200px);
+}
+.s-pain .tag {
+    display: inline-block;
+    background: var(--ink);
+    color: var(--acid);
+    font-family: var(--font-mono);
+    padding: 6px 14px;
+    font-size: clamp(0.7rem, 1vw, 0.9rem);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    width: fit-content;
+}
+.s-pain .subtitle {
+    font-family: var(--font-chic);
+    font-weight: 700;
+    font-size: clamp(1rem, 2vw, 1.5rem);
+    max-width: 700px;
+    line-height: 1.3;
+}
+.pain-strike { text-decoration: line-through; text-decoration-thickness: 3px; text-decoration-color: var(--ink); }
+
+/* ===========================================
+   SLIDE 3 — THE FIX (SPLIT-SCREEN DIAGRAM)
+   =========================================== */
+.s-fix { background: var(--bg-cream); color: var(--ink); justify-content: center; }
+.s-fix h2 {
+    font-family: var(--font-smash);
+    font-size: var(--h2-size);
+    text-transform: uppercase;
+    line-height: 0.95;
+    margin-bottom: var(--content-gap);
+}
+.s-fix .tag {
+    display: inline-block;
+    background: var(--ink);
+    color: var(--acid);
+    font-family: var(--font-mono);
+    padding: 5px 12px;
+    font-size: clamp(0.7rem, 1vw, 0.85rem);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    width: fit-content;
+    margin-bottom: var(--element-gap);
+}
+
+.mockup {
+    background: var(--ink);
+    border-radius: 14px;
+    padding: clamp(10px, 1.5vw, 16px);
+    max-width: min(92vw, 1100px);
+    aspect-ratio: 16 / 8.5;
+    display: grid;
+    grid-template-columns: 80px 1fr 1fr;
+    gap: clamp(8px, 1vw, 12px);
+    box-shadow: 14px 14px 0 var(--pink);
+}
+.mockup .mock-side {
+    background: #19171d;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    gap: 6px;
+}
+.mockup .mock-side .chip { height: 12px; border-radius: 4px; background: #2b2f34; }
+.mockup .mock-side .chip.active { background: var(--acid); }
+.mockup .mock-yt {
+    background: #000;
+    border-radius: 8px;
+    position: relative;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+}
+.mockup .mock-yt::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(255,45,122,0.25), transparent 60%);
+}
+.mockup .mock-yt .play-tri {
+    width: 0;
+    height: 0;
+    border-left: clamp(24px, 3vw, 40px) solid var(--acid);
+    border-top: clamp(16px, 2vw, 26px) solid transparent;
+    border-bottom: clamp(16px, 2vw, 26px) solid transparent;
+    filter: drop-shadow(0 0 20px rgba(242,255,0,0.6));
+}
+.mockup .mock-claude {
+    background: #222529;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: clamp(0.55rem, 0.9vw, 0.8rem);
+    color: #e6e6e6;
+}
+.mockup .line { height: 10px; border-radius: 3px; background: #2b2f34; }
+.mockup .line.short { width: 55%; }
+.mockup .line.accent { background: var(--pink); width: 40%; }
+
+/* ===========================================
+   SLIDE 4 — THE MAGIC (auto-pause)
+   =========================================== */
+.s-magic {
+    background: var(--ink);
+    color: var(--bg-cream);
+    justify-content: center;
+    overflow: hidden;
+}
+.s-magic .slide-content { gap: var(--content-gap); align-items: center; text-align: center; }
+.s-magic h2 {
+    font-family: var(--font-smash);
+    font-size: var(--title-size);
+    text-transform: uppercase;
+    line-height: 0.88;
+    max-width: min(92vw, 1300px);
+}
+.s-magic h2 .acid { color: var(--acid); }
+.s-magic h2 .pink { color: var(--pink); display: inline-block; transform: rotate(-2deg); }
+
+.flow {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: clamp(8px, 1.5vw, 20px);
+    max-width: min(94vw, 1150px);
+    width: 100%;
+    font-family: var(--font-mono);
+    font-size: clamp(0.7rem, 1.1vw, 0.95rem);
+    margin-top: var(--content-gap);
+}
+.flow-step {
+    background: #141414;
+    border: 1.5px solid #2a2a2a;
+    border-radius: 10px;
+    padding: clamp(10px, 1.5vw, 18px);
+    text-align: left;
+    position: relative;
+}
+.flow-step .num {
+    font-family: var(--font-smash);
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
+    color: var(--acid);
+    line-height: 1;
+}
+.flow-step .txt {
+    margin-top: 6px;
+    color: var(--bg-cream);
+    line-height: 1.35;
+}
+.flow-step.accent-pink { border-color: var(--pink); }
+.flow-step.accent-pink .num { color: var(--pink); }
+@media (max-width: 700px) { .flow { grid-template-columns: 1fr 1fr; } }
+
+/* ===========================================
+   SLIDE 5 — SLACK SESSIONS
+   =========================================== */
+.s-slack {
+    background: var(--acid);
+    color: var(--ink);
+    justify-content: center;
+}
+.s-slack .slide-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--content-gap);
+    align-items: center;
+}
+.s-slack h2 {
+    font-family: var(--font-smash);
+    font-size: var(--h2-size);
+    text-transform: uppercase;
+    line-height: 0.92;
+}
+.s-slack .lead {
+    font-family: var(--font-chic);
+    font-weight: 700;
+    font-size: clamp(1rem, 1.6vw, 1.3rem);
+    margin-top: var(--element-gap);
+    line-height: 1.4;
+    max-width: 520px;
+}
+.s-slack .tag {
+    display: inline-block;
+    background: var(--ink);
+    color: var(--acid);
+    font-family: var(--font-mono);
+    padding: 6px 14px;
+    font-size: clamp(0.7rem, 1vw, 0.9rem);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: var(--element-gap);
+}
+
+.fake-sidebar {
+    background: #19171d;
+    border-radius: 12px;
+    padding: clamp(12px, 1.5vw, 18px);
+    color: var(--bg-cream);
+    box-shadow: 12px 12px 0 var(--pink);
+    max-width: 380px;
+    justify-self: center;
+    width: 100%;
+}
+.fake-sidebar .fs-head {
+    font-family: var(--font-smash);
+    font-size: clamp(0.9rem, 1.3vw, 1.1rem);
+    letter-spacing: 0.02em;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #3a3d42;
+    margin-bottom: 10px;
+}
+.fake-sidebar .fs-label {
+    font-family: var(--font-mono);
+    font-size: clamp(0.6rem, 0.9vw, 0.75rem);
+    letter-spacing: 0.12em;
+    color: #a6a6a6;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+.fake-sidebar ul { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.fake-sidebar li {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-family: var(--font-chic);
+    font-weight: 700;
+    font-size: clamp(0.8rem, 1vw, 0.95rem);
+    color: #bfbfbf;
+}
+.fake-sidebar li.active { background: #0030ff; color: #fff; }
+.fake-sidebar li .hash { opacity: 0.6; }
+
+/* ===========================================
+   SLIDE 6 — CHILL GUY MEME
+   =========================================== */
+.s-chill {
+    background:
+        linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+.s-chill .meme-tag {
+    font-family: var(--font-mono);
+    font-size: clamp(0.7rem, 1vw, 0.9rem);
+    background: var(--acid); color: var(--ink);
+    padding: 6px 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: var(--element-gap);
+}
+.s-chill h2 {
+    font-family: var(--font-smash);
+    font-size: var(--title-size);
+    line-height: 0.9;
+    text-transform: uppercase;
+    max-width: min(92vw, 1200px);
+}
+.s-chill h2 .acid { color: var(--acid); }
+.s-chill .cap {
+    margin-top: var(--content-gap);
+    font-family: var(--font-chic);
+    font-weight: 700;
+    font-size: clamp(1rem, 1.7vw, 1.4rem);
+    max-width: 700px;
+    line-height: 1.35;
+}
+
+/* CSS-drawn "chill guy" silhouette — abstract, vibe-only */
+.chill-guy {
+    width: clamp(140px, 18vw, 240px);
+    aspect-ratio: 1;
+    position: relative;
+    margin: var(--element-gap) auto;
+}
+.chill-guy .head {
+    position: absolute; top: 8%; left: 50%; transform: translateX(-50%);
+    width: 42%; aspect-ratio: 1; border-radius: 50%;
+    background: #d9b48a;
+    border: 3px solid var(--ink);
+}
+.chill-guy .eye {
+    position: absolute; top: 18%; width: 5%; aspect-ratio: 1; border-radius: 50%;
+    background: var(--ink);
+}
+.chill-guy .eye-l { left: 38%; }
+.chill-guy .eye-r { right: 38%; }
+.chill-guy .smirk {
+    position: absolute; top: 25%; left: 50%;
+    width: 14%; height: 6%;
+    border-bottom: 3px solid var(--ink);
+    border-radius: 50%;
+    transform: translateX(-50%) rotate(-8deg);
+}
+.chill-guy .body {
+    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 75%; height: 55%;
+    background: var(--pink);
+    border: 3px solid var(--ink);
+    border-radius: 14px 14px 4px 4px;
+}
+.chill-guy .body::after {
+    content: 'VIBES';
+    position: absolute; top: 32%; left: 50%; transform: translateX(-50%);
+    font-family: var(--font-smash);
+    font-size: clamp(0.7rem, 1.3vw, 1rem);
+    color: var(--acid);
+    letter-spacing: 0.1em;
+}
+
+/* ===========================================
+   SLIDE 7 — KITKAT HEIST MEME
+   =========================================== */
+.s-heist {
+    background: var(--blue);
+    color: var(--bg-cream);
+    justify-content: center;
+}
+.s-heist .slide-content { align-items: center; text-align: center; }
+.s-heist .meme-tag {
+    font-family: var(--font-mono);
+    font-size: clamp(0.7rem, 1vw, 0.9rem);
+    background: var(--acid); color: var(--ink);
+    padding: 6px 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: var(--element-gap);
+}
+.s-heist h2 {
+    font-family: var(--font-smash);
+    font-size: var(--title-size);
+    line-height: 0.88;
+    text-transform: uppercase;
+    max-width: min(92vw, 1300px);
+    color: var(--bg-cream);
+}
+.s-heist h2 .pink { color: var(--pink); }
+.s-heist .cap {
+    margin-top: var(--content-gap);
+    font-family: var(--font-chic);
+    font-weight: 700;
+    font-size: clamp(1rem, 1.7vw, 1.4rem);
+    max-width: 800px;
+    line-height: 1.4;
+}
+.heist-stats {
+    display: flex;
+    gap: clamp(12px, 2.5vw, 36px);
+    margin-top: var(--content-gap);
+    font-family: var(--font-mono);
+    font-size: clamp(0.7rem, 1vw, 0.9rem);
+}
+.heist-stats .stat {
+    background: var(--ink);
+    border: 2px solid var(--acid);
+    padding: 10px 14px;
+    border-radius: 6px;
+}
+.heist-stats .big {
+    font-family: var(--font-smash);
+    font-size: clamp(1.3rem, 2.5vw, 2.2rem);
+    color: var(--acid);
+    display: block;
+    line-height: 1;
+}
+
+/* ===========================================
+   SLIDE 8 — THE STACK
+   =========================================== */
+.s-stack {
+    background: var(--bg-cream);
+    color: var(--ink);
+    justify-content: center;
+}
+.s-stack h2 {
+    font-family: var(--font-smash);
+    font-size: var(--h2-size);
+    text-transform: uppercase;
+    line-height: 0.9;
+    margin-bottom: var(--element-gap);
+}
+.s-stack .kicker {
+    font-family: var(--font-mono);
+    font-size: clamp(0.7rem, 1vw, 0.9rem);
+    background: var(--ink); color: var(--acid);
+    padding: 6px 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    width: fit-content;
+    margin-bottom: var(--element-gap);
+}
+
+.stack-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(10px, 2vw, 22px);
+    max-width: min(92vw, 1100px);
+    margin-top: var(--content-gap);
+}
+.stack-card {
+    background: var(--ink);
+    color: var(--bg-cream);
+    padding: clamp(14px, 2vw, 22px);
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+}
+.stack-card::before {
+    content: '';
+    position: absolute;
+    right: -20px; top: -20px;
+    width: 70px; height: 70px;
+    background: var(--card-accent, var(--acid));
+    border-radius: 50%;
+    opacity: 0.3;
+}
+.stack-card .tool {
+    font-family: var(--font-smash);
+    font-size: clamp(1.1rem, 2vw, 1.7rem);
+    text-transform: uppercase;
+    color: var(--card-accent, var(--acid));
+    line-height: 1;
+    margin-bottom: 8px;
+}
+.stack-card .why {
+    font-family: var(--font-mono);
+    font-size: clamp(0.75rem, 1vw, 0.9rem);
+    line-height: 1.45;
+}
+.stack-card.pink { --card-accent: var(--pink); }
+.stack-card.blue { --card-accent: #5d87ff; }
+@media (max-width: 700px) { .stack-grid { grid-template-columns: 1fr; } }
+
+.stack-coda {
+    margin-top: var(--content-gap);
+    font-family: var(--font-smash);
+    font-size: clamp(1rem, 1.6vw, 1.4rem);
+    text-transform: uppercase;
+    background: var(--acid);
+    color: var(--ink);
+    padding: 10px 16px;
+    width: fit-content;
+    transform: rotate(-1.2deg);
+}
+
+/* ===========================================
+   SLIDE 9 — CTA
+   =========================================== */
+.s-cta {
+    background:
+        radial-gradient(ellipse at 80% 20%, rgba(255,45,122,0.4), transparent 55%),
+        radial-gradient(ellipse at 20% 80%, rgba(0,48,255,0.4), transparent 55%),
+        var(--bg-black);
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    overflow: hidden;
+}
+.s-cta .slide-content { gap: var(--content-gap); align-items: center; }
+.s-cta .kicker {
+    font-family: var(--font-mono);
+    font-size: clamp(0.7rem, 1vw, 0.9rem);
+    color: var(--acid);
+    padding: 6px 12px;
+    border: 1.5px solid var(--acid);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+}
+.s-cta h2 {
+    font-family: var(--font-smash);
+    font-size: var(--title-size);
+    text-transform: uppercase;
+    line-height: 0.88;
+    max-width: min(92vw, 1300px);
+}
+.s-cta h2 .box {
+    display: inline-block;
+    background: var(--acid);
+    color: var(--ink);
+    padding: 0.02em 0.18em;
+    transform: rotate(-1.2deg);
+}
+.s-cta .sub {
+    font-family: var(--font-chic);
+    font-weight: 800;
+    font-size: clamp(1.1rem, 1.8vw, 1.6rem);
+    max-width: 700px;
+    line-height: 1.35;
+}
+.s-cta .pill-row {
+    display: flex;
+    gap: clamp(10px, 1.5vw, 18px);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.s-cta .pill {
+    background: var(--pink);
+    color: var(--bg-cream);
+    padding: 12px 20px;
+    border-radius: 999px;
+    font-family: var(--font-smash);
+    font-size: clamp(0.9rem, 1.2vw, 1.1rem);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border: 2px solid var(--bg-cream);
+}
+.s-cta .pill.acid { background: var(--acid); color: var(--ink); border-color: var(--ink); }
+
+/* Marquee footer on CTA — ticker-tape viral vibe */
+.marquee {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    overflow: hidden;
+    background: var(--acid);
+    color: var(--ink);
+    padding: 10px 0;
+    font-family: var(--font-smash);
+    font-size: clamp(0.9rem, 1.4vw, 1.2rem);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+}
+.marquee-track {
+    display: inline-block;
+    animation: marquee 30s linear infinite;
+    padding-left: 100%;
+}
+.marquee-track span { margin: 0 2rem; }
+
+/* keyboard hint */
+.keyboard-hint {
+    position: fixed;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    opacity: 0.4;
+    z-index: 40;
+    letter-spacing: 0.1em;
+}
+</style>
+</head>
+<body>
+
+<!-- Fixed UI chrome -->
+<div class="progress-bar"></div>
+<nav class="nav-dots" aria-label="slide navigation"></nav>
+<div class="keyboard-hint">← → ↑ ↓ / space / scroll</div>
+
+<!-- =========================================
+     SLIDE 1 — TITLE
+     ========================================= -->
+<section class="slide s-title">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="grid-bg"></div>
+
+    <div class="slide-num">01 / 09</div>
+    <div class="slide-content">
+        <div class="kicker reveal">a build-in-public experiment</div>
+        <h1 class="pop">
+            WHAT IF <span class="hi-yellow">YOUTUBE</span><br>
+            <span class="box">PAUSED</span> WHEN<br>
+            <span class="hi-pink">CLAUDE</span> TALKED?
+        </h1>
+        <p class="sub reveal">// claude-code-youtube &nbsp;·&nbsp; one window. zero alt-tab.</p>
+    </div>
+</section>
+
+<!-- =========================================
+     SLIDE 2 — THE PAIN
+     ========================================= -->
+<section class="slide s-pain">
+    <div class="halftone"></div>
+    <div class="slide-num">02 / 09</div>
+    <div class="slide-content">
+        <span class="tag reveal">the problem</span>
+        <h2 class="reveal">YOU'RE <span class="pain-strike">LEARNING</span><br>YOU'RE ALT-TABBING.</h2>
+        <p class="subtitle reveal">
+            cmd+tab. pause. scroll to find your spot. type prompt. cmd+tab. unpause.<br>
+            miss what they just said. cmd+tab. rewind 15 seconds. repeat until sundown.
+        </p>
+    </div>
+</section>
+
+<!-- =========================================
+     SLIDE 3 — THE FIX / MOCKUP
+     ========================================= -->
+<section class="slide s-fix">
+    <div class="slide-num">03 / 09</div>
+    <div class="slide-content" style="align-items:center;">
+        <div style="width:100%; max-width:1100px;">
+            <span class="tag reveal">the fix</span>
+            <h2 class="reveal">ONE WINDOW.<br>YOUTUBE ← → CLAUDE.</h2>
+        </div>
+
+        <div class="mockup reveal">
+            <div class="mock-side">
+                <div class="chip active"></div>
+                <div class="chip"></div>
+                <div class="chip"></div>
+                <div class="chip"></div>
+                <div class="chip"></div>
+            </div>
+            <div class="mock-yt">
+                <div class="play-tri"></div>
+            </div>
+            <div class="mock-claude">
+                <div class="line short"></div>
+                <div class="line"></div>
+                <div class="line accent"></div>
+                <div class="line"></div>
+                <div class="line short"></div>
+                <div class="line"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- =========================================
+     SLIDE 4 — THE MAGIC
+     ========================================= -->
+<section class="slide s-magic">
+    <div class="grid-bg"></div>
+    <div class="slide-num">04 / 09</div>
+    <div class="slide-content">
+        <h2 class="pop">
+            THE <span class="acid">AUTO-PAUSE</span><br>
+            <span class="pink">IS THE WHOLE POINT.</span>
+        </h2>
+
+        <div class="flow">
+            <div class="flow-step reveal">
+                <div class="num">01</div>
+                <div class="txt">you hit send →<br>youtube pauses.</div>
+            </div>
+            <div class="flow-step accent-pink reveal">
+                <div class="num">02</div>
+                <div class="txt">claude thinks,<br>then streams back.</div>
+            </div>
+            <div class="flow-step reveal">
+                <div class="num">03</div>
+                <div class="txt">you read. you think.<br>you don't miss a frame.</div>
+            </div>
+            <div class="flow-step accent-pink reveal">
+                <div class="num">04</div>
+                <div class="txt">you type next prompt →<br>video resumes. loop.</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- =========================================
+     SLIDE 5 — SLACK SESSIONS
+     ========================================= -->
+<section class="slide s-slack">
+    <div class="halftone"></div>
+    <div class="slide-num">05 / 09</div>
+    <div class="slide-content">
+        <div>
+            <span class="tag reveal">the navigation</span>
+            <h2 class="reveal">SESSIONS<br>LIKE SLACK.</h2>
+            <p class="lead reveal">
+                every chat = a channel in the sidebar. click, switch, ship.
+                zero ceremony, zero onboarding. you already know how to use it.
+            </p>
+        </div>
+
+        <div class="fake-sidebar reveal">
+            <div class="fs-head">claude code</div>
+            <div class="fs-label">sessions</div>
+            <ul>
+                <li class="active"><span class="hash">#</span>learn react hooks</li>
+                <li><span class="hash">#</span>refactor flashcard slider</li>
+                <li><span class="hash">#</span>scratch</li>
+                <li><span class="hash">#</span>debug the monorepo</li>
+                <li><span class="hash">#</span>explain tRPC one more time</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- =========================================
+     SLIDE 6 — CHILL GUY MEME
+     ========================================= -->
+<section class="slide s-chill">
+    <div class="halftone"></div>
+    <div class="slide-num">06 / 09</div>
+    <div class="slide-content">
+        <span class="meme-tag reveal">meme break · april 2026</span>
+
+        <div class="chill-guy reveal" aria-hidden="true">
+            <div class="head">
+                <div class="eye eye-l"></div>
+                <div class="eye eye-r"></div>
+                <div class="smirk"></div>
+            </div>
+            <div class="body"></div>
+        </div>
+
+        <h2 class="reveal">THE <span class="acid">CHILL GUY</span><br>CODING STACK.</h2>
+        <p class="cap reveal">
+            claude ships the code. youtube plays the lo-fi.<br>
+            you nod once. you press send. you are built different.
+        </p>
+    </div>
+</section>
+
+<!-- =========================================
+     SLIDE 7 — KITKAT HEIST MEME
+     ========================================= -->
+<section class="slide s-heist">
+    <div class="halftone"></div>
+    <div class="slide-num">07 / 09</div>
+    <div class="slide-content">
+        <span class="meme-tag reveal">meme break · the kitkat heist</span>
+        <h2 class="reveal">
+            WE'RE STEALING <span class="pink">400,000</span><br>
+            CONTEXT SWITCHES BACK.
+        </h2>
+        <p class="cap reveal">
+            someone stole 400k kitkats in a truck this year. we're running the same
+            play, except the loot is the 45 seconds you lose every time you alt-tab.
+        </p>
+
+        <div class="heist-stats reveal">
+            <div class="stat"><span class="big">23×</span> alt-tabs / hr</div>
+            <div class="stat"><span class="big">~17min</span> lost / hr</div>
+            <div class="stat"><span class="big">0</span> after today</div>
+        </div>
+    </div>
+</section>
+
+<!-- =========================================
+     SLIDE 8 — THE STACK
+     ========================================= -->
+<section class="slide s-stack">
+    <div class="slide-num">08 / 09</div>
+    <div class="slide-content" style="align-items:center;">
+        <div style="max-width:1100px; width:100%;">
+            <span class="kicker reveal">bare-bones architecture</span>
+            <h2 class="reveal">SHIPPED IN<br>ONE SITTING.</h2>
+        </div>
+
+        <div class="stack-grid">
+            <div class="stack-card reveal">
+                <div class="tool">Vite + React + TS</div>
+                <div class="why">the whole ui. split panel. slack sidebar. composer. &lt; 10 files.</div>
+            </div>
+            <div class="stack-card pink reveal">
+                <div class="tool">YT IFrame API</div>
+                <div class="why">loaded from a &lt;script&gt; tag. one ref, one .pauseVideo(), one .playVideo().</div>
+            </div>
+            <div class="stack-card blue reveal">
+                <div class="tool">Claude Agent SDK</div>
+                <div class="why">stubbed today. drop in tomorrow. status transitions drive the pause loop.</div>
+            </div>
+        </div>
+
+        <div class="stack-coda reveal">that's it. that's the stack.</div>
+    </div>
+</section>
+
+<!-- =========================================
+     SLIDE 9 — CTA
+     ========================================= -->
+<section class="slide s-cta">
+    <div class="grid-bg"></div>
+    <div class="slide-num">09 / 09</div>
+    <div class="slide-content">
+        <span class="kicker reveal">the ask</span>
+        <h2 class="pop">
+            ALREADY FUMBLED 2025.<br>
+            <span class="box">2026 IS MY YEAR.</span>
+        </h2>
+        <p class="sub reveal">build it with me. the repo is live. the deck is loud. the video pauses itself.</p>
+        <div class="pill-row reveal">
+            <span class="pill acid">★ subscribe</span>
+            <span class="pill">→ github.com/claude-code-youtube</span>
+            <span class="pill acid">comment: what vid should i learn from next</span>
+        </div>
+    </div>
+
+    <div class="marquee" aria-hidden="true">
+        <div class="marquee-track">
+            <span>claude code × youtube</span><span>/</span>
+            <span>auto-pause enabled</span><span>/</span>
+            <span>slack-style sessions</span><span>/</span>
+            <span>bare bones. big vibes.</span><span>/</span>
+            <span>ship it on stream</span><span>/</span>
+            <span>claude code × youtube</span><span>/</span>
+            <span>auto-pause enabled</span><span>/</span>
+            <span>slack-style sessions</span><span>/</span>
+            <span>bare bones. big vibes.</span><span>/</span>
+            <span>ship it on stream</span><span>/</span>
+        </div>
+    </div>
+</section>
+
+<script>
+/* ===========================================
+   SLIDE PRESENTATION CONTROLLER
+   Keyboard + scroll + nav-dots + progress bar.
+   Minimal — no deps.
+   =========================================== */
+class SlidePresentation {
+    constructor() {
+        this.slides = Array.from(document.querySelectorAll('.slide'));
+        this.current = 0;
+        this.setupObserver();
+        this.setupKeys();
+        this.setupTouch();
+        this.setupDots();
+        this.setupProgress();
+        // Prime the first slide so reveals fire immediately.
+        requestAnimationFrame(() => this.slides[0].classList.add('visible'));
+    }
+
+    setupObserver() {
+        const io = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+                    entry.target.classList.add('visible');
+                    this.current = this.slides.indexOf(entry.target);
+                    this.updateDots();
+                }
+            });
+        }, { threshold: [0.5] });
+        this.slides.forEach((s) => io.observe(s));
+    }
+
+    go(i) {
+        i = Math.max(0, Math.min(this.slides.length - 1, i));
+        this.slides[i].scrollIntoView({ behavior: 'smooth' });
+    }
+
+    setupKeys() {
+        document.addEventListener('keydown', (e) => {
+            if (['ArrowDown', 'ArrowRight', ' ', 'PageDown'].includes(e.key)) {
+                e.preventDefault();
+                this.go(this.current + 1);
+            } else if (['ArrowUp', 'ArrowLeft', 'PageUp'].includes(e.key)) {
+                e.preventDefault();
+                this.go(this.current - 1);
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                this.go(0);
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                this.go(this.slides.length - 1);
+            }
+        });
+    }
+
+    setupTouch() {
+        let startY = 0;
+        document.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; }, { passive: true });
+        document.addEventListener('touchend', (e) => {
+            const dy = startY - e.changedTouches[0].clientY;
+            if (Math.abs(dy) > 50) this.go(this.current + (dy > 0 ? 1 : -1));
+        }, { passive: true });
+    }
+
+    setupDots() {
+        const container = document.querySelector('.nav-dots');
+        this.dots = this.slides.map((_, i) => {
+            const b = document.createElement('button');
+            b.setAttribute('aria-label', `Go to slide ${i + 1}`);
+            b.addEventListener('click', () => this.go(i));
+            container.appendChild(b);
+            return b;
+        });
+        this.updateDots();
+    }
+
+    updateDots() {
+        this.dots?.forEach((d, i) => d.classList.toggle('active', i === this.current));
+    }
+
+    setupProgress() {
+        const bar = document.querySelector('.progress-bar');
+        const update = () => {
+            const max = document.documentElement.scrollHeight - window.innerHeight;
+            bar.style.width = ((window.scrollY / max) * 100) + '%';
+        };
+        window.addEventListener('scroll', update, { passive: true });
+        window.addEventListener('resize', update);
+        update();
+    }
+}
+
+new SlidePresentation();
+</script>
+</body>
+</html>
