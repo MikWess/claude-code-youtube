@@ -1,0 +1,891 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>I GOT RICKROLLED BY CLAUDE CODE · an exposé</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Syne:wght@700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+/* ===========================================
+   THEME — shared palette, tabloid-exposé mode
+   =========================================== */
+:root {
+    --bg-black: #0a0a0a;
+    --bg-cream: #faf6e8;
+    --acid: #f2ff00;
+    --pink: #ff2d7a;
+    --blue: #0030ff;
+    --ink: #0a0a0a;
+    --red: #ff1f1f;
+
+    --font-smash: 'Archivo Black', 'Impact', sans-serif;
+    --font-chic: 'Syne', sans-serif;
+    --font-mono: 'Space Mono', ui-monospace, monospace;
+}
+
+/* ===========================================
+   VIEWPORT BASE (copied from viewport-base.css)
+   =========================================== */
+html, body { height: 100%; overflow-x: hidden; }
+html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+
+.slide {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+.slide-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-height: 100%;
+    overflow: hidden;
+    padding: var(--slide-padding);
+}
+
+:root {
+    --title-size: clamp(2.25rem, 8.5vw, 8rem);
+    --h2-size: clamp(1.4rem, 4.5vw, 3.5rem);
+    --h3-size: clamp(1rem, 2.4vw, 1.75rem);
+    --body-size: clamp(0.85rem, 1.5vw, 1.15rem);
+    --small-size: clamp(0.65rem, 1vw, 0.875rem);
+    --slide-padding: clamp(1.25rem, 4vw, 4rem);
+    --content-gap: clamp(0.75rem, 2vw, 2rem);
+    --element-gap: clamp(0.25rem, 1vw, 1rem);
+}
+
+.card, .container, .content-box {
+    max-width: min(92vw, 1100px);
+    max-height: min(82vh, 760px);
+}
+.feature-list, .bullet-list { gap: clamp(0.4rem, 1vh, 1rem); }
+.feature-list li, .bullet-list li { font-size: var(--body-size); line-height: 1.4; }
+img { max-width: 100%; max-height: min(50vh, 400px); object-fit: contain; }
+
+@media (max-height: 700px) {
+    :root {
+        --slide-padding: clamp(0.75rem, 3vw, 2rem);
+        --title-size: clamp(1.9rem, 7vw, 4.5rem);
+        --h2-size: clamp(1.2rem, 3.5vw, 2.25rem);
+    }
+}
+@media (max-height: 600px) {
+    :root {
+        --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem);
+        --title-size: clamp(1.5rem, 6vw, 3.2rem);
+    }
+    .nav-dots, .keyboard-hint, .decorative { display: none; }
+}
+@media (max-height: 500px) {
+    :root {
+        --slide-padding: clamp(0.4rem, 2vw, 1rem);
+        --title-size: clamp(1.2rem, 5vw, 2rem);
+    }
+}
+@media (max-width: 600px) {
+    :root { --title-size: clamp(1.7rem, 11vw, 4rem); }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.2s !important; }
+    html { scroll-behavior: auto; }
+}
+
+/* ===========================================
+   BASE
+   =========================================== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: var(--font-chic);
+    background: var(--bg-black);
+    color: var(--bg-cream);
+    -webkit-font-smoothing: antialiased;
+}
+::selection { background: var(--acid); color: var(--ink); }
+
+.reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.slide.visible .reveal { opacity: 1; transform: translateY(0); }
+.slide.visible .reveal:nth-child(1) { transition-delay: 0.05s; }
+.slide.visible .reveal:nth-child(2) { transition-delay: 0.17s; }
+.slide.visible .reveal:nth-child(3) { transition-delay: 0.29s; }
+.slide.visible .reveal:nth-child(4) { transition-delay: 0.41s; }
+.slide.visible .reveal:nth-child(5) { transition-delay: 0.53s; }
+.slide.visible .reveal:nth-child(6) { transition-delay: 0.65s; }
+
+@keyframes pop-in {
+    0%   { transform: scale(0.6) rotate(-5deg); opacity: 0; }
+    60%  { transform: scale(1.08) rotate(1.5deg); opacity: 1; }
+    100% { transform: scale(1) rotate(-2deg); opacity: 1; }
+}
+.slide.visible .pop { animation: pop-in 0.75s cubic-bezier(0.2, 1.3, 0.4, 1) both; }
+
+@keyframes shake {
+    0%,100% { transform: translate(0,0) rotate(0deg); }
+    10% { transform: translate(-2px,1px) rotate(-0.5deg); }
+    20% { transform: translate(2px,-1px) rotate(0.5deg); }
+    30% { transform: translate(-1px,2px) rotate(-0.3deg); }
+    40% { transform: translate(2px,1px) rotate(0.3deg); }
+    50% { transform: translate(-2px,-1px) rotate(-0.4deg); }
+    60% { transform: translate(1px,2px) rotate(0.4deg); }
+    70% { transform: translate(-1px,-2px) rotate(-0.2deg); }
+    80% { transform: translate(2px,1px) rotate(0.2deg); }
+    90% { transform: translate(-1px,1px) rotate(-0.3deg); }
+}
+.shake { animation: shake 0.6s infinite; }
+
+@keyframes flash-red {
+    0%,100% { background: #2a0000; }
+    50% { background: var(--red); }
+}
+.alert { animation: flash-red 1.6s infinite; }
+
+@keyframes blink { 50% { opacity: 0; } }
+.blink { animation: blink 1s step-end infinite; }
+
+/* Textures */
+.grid-bg {
+    position: absolute; inset: 0;
+    background-image:
+        linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+}
+.halftone {
+    position: absolute; inset: 0;
+    background-image: radial-gradient(var(--ink) 1.2px, transparent 1.3px);
+    background-size: 14px 14px;
+    opacity: 0.18;
+    pointer-events: none;
+}
+.scanlines {
+    position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.04) 0 2px,
+        transparent 2px 4px
+    );
+    pointer-events: none;
+}
+
+/* Chrome */
+.progress-bar {
+    position: fixed; top: 0; left: 0;
+    height: 4px; width: 0%;
+    background: var(--acid);
+    z-index: 100;
+    transition: width 0.15s linear;
+}
+.nav-dots {
+    position: fixed; right: clamp(12px, 2vw, 24px); top: 50%;
+    transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: 10px;
+    z-index: 50;
+}
+.nav-dots button {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: rgba(250, 246, 232, 0.25);
+    border: 0; padding: 0; cursor: pointer;
+    transition: background 0.3s, transform 0.3s;
+}
+.nav-dots button.active { background: var(--acid); transform: scale(1.4); }
+.nav-dots button:hover { background: var(--pink); }
+
+.slide-num {
+    position: absolute;
+    top: clamp(12px, 2vw, 24px);
+    left: clamp(16px, 3vw, 32px);
+    font-family: var(--font-mono);
+    font-size: clamp(0.7rem, 1vw, 0.9rem);
+    letter-spacing: 0.08em;
+    opacity: 0.55;
+    z-index: 10;
+}
+.keyboard-hint {
+    position: fixed;
+    bottom: 14px; left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    opacity: 0.4;
+    z-index: 40;
+    letter-spacing: 0.1em;
+}
+
+/* Shared tag */
+.tag {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: clamp(0.68rem, 1vw, 0.9rem);
+    padding: 6px 14px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    width: fit-content;
+}
+.tag.red { background: var(--red); color: var(--bg-cream); }
+.tag.acid { background: var(--acid); color: var(--ink); }
+.tag.ink { background: var(--ink); color: var(--acid); }
+
+/* ===========================================
+   SLIDE 1 — TITLE (TABLOID BREAKING NEWS)
+   =========================================== */
+.s-title {
+    background:
+        radial-gradient(ellipse at 25% 25%, rgba(255,31,31,0.35) 0%, transparent 55%),
+        radial-gradient(ellipse at 75% 75%, rgba(242,255,0,0.20) 0%, transparent 55%),
+        var(--bg-black);
+    justify-content: center; align-items: center; text-align: center;
+}
+.s-title .slide-content { gap: var(--content-gap); align-items: center; }
+.s-title .breaking {
+    background: var(--red);
+    color: var(--bg-cream);
+    padding: 8px 18px;
+    font-family: var(--font-smash);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: clamp(0.85rem, 1.3vw, 1.15rem);
+}
+.s-title .breaking .dot {
+    display: inline-block;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--bg-cream);
+    margin-right: 10px;
+    vertical-align: middle;
+}
+.s-title h1 {
+    font-family: var(--font-smash);
+    font-size: var(--title-size);
+    line-height: 0.86;
+    text-transform: uppercase;
+    max-width: min(94vw, 1400px);
+    letter-spacing: -0.015em;
+}
+.s-title h1 .acid { color: var(--acid); display: inline-block; transform: rotate(-1.5deg); }
+.s-title h1 .box {
+    display: inline-block;
+    background: var(--red);
+    color: var(--bg-cream);
+    padding: 0.02em 0.15em;
+    transform: rotate(-1.2deg);
+}
+.s-title .sub {
+    font-family: var(--font-mono);
+    font-size: clamp(0.8rem, 1.3vw, 1.1rem);
+    letter-spacing: 0.1em;
+    opacity: 0.85;
+}
+
+/* ===========================================
+   SLIDE 2 — THE SETUP
+   =========================================== */
+.s-setup {
+    background: var(--bg-cream);
+    color: var(--ink);
+    justify-content: center;
+}
+.s-setup .slide-content { align-items: flex-start; gap: var(--content-gap); }
+.s-setup h2 {
+    font-family: var(--font-smash);
+    font-size: var(--h2-size);
+    text-transform: uppercase;
+    line-height: 0.92;
+}
+.s-setup h2 .pink { color: var(--pink); }
+
+/* Chat-message style prompt quote */
+.prompt-bubble {
+    background: var(--ink);
+    color: var(--bg-cream);
+    font-family: var(--font-mono);
+    font-size: clamp(0.8rem, 1.25vw, 1.05rem);
+    line-height: 1.55;
+    padding: clamp(16px, 2vw, 22px);
+    border-radius: 14px;
+    max-width: min(94vw, 850px);
+    box-shadow: 10px 10px 0 var(--pink);
+    position: relative;
+}
+.prompt-bubble::before {
+    content: 'YOU';
+    position: absolute;
+    top: -14px; left: 18px;
+    background: var(--pink);
+    color: var(--bg-cream);
+    padding: 3px 10px;
+    font-family: var(--font-smash);
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    border-radius: 4px;
+}
+.prompt-bubble .q { color: var(--acid); }
+
+/* ===========================================
+   SLIDE 3 — THE CRIME (STOP-SIGN RED)
+   =========================================== */
+.s-crime {
+    background: var(--red);
+    color: var(--bg-cream);
+    justify-content: center;
+    text-align: center;
+}
+.s-crime .slide-content { align-items: center; gap: var(--content-gap); }
+.s-crime h2 {
+    font-family: var(--font-smash);
+    font-size: var(--title-size);
+    text-transform: uppercase;
+    line-height: 0.88;
+    max-width: min(94vw, 1300px);
+}
+.s-crime h2 .acid-box {
+    display: inline-block;
+    background: var(--acid);
+    color: var(--ink);
+    padding: 0.02em 0.15em;
+    transform: rotate(-1.4deg);
+}
+.s-crime .cap {
+    font-family: var(--font-chic);
+    font-weight: 700;
+    font-size: clamp(1rem, 1.8vw, 1.4rem);
+    max-width: 760px;
+    line-height: 1.35;
+}
+
+/* ===========================================
+   SLIDE 4 — THE EVIDENCE (CODE)
+   =========================================== */
+.s-evidence {
+    background: var(--ink);
+    color: var(--bg-cream);
+    justify-content: center;
+}
+.s-evidence .slide-content { align-items: center; gap: var(--content-gap); }
+.s-evidence h2 {
+    font-family: var(--font-smash);
+    font-size: var(--h2-size);
+    text-transform: uppercase;
+    line-height: 0.92;
+    text-align: center;
+    max-width: min(92vw, 1100px);
+}
+.s-evidence h2 .acid { color: var(--acid); }
+
+.code-exhibit {
+    background: #141414;
+    border: 1.5px solid #2a2a2a;
+    border-radius: 10px;
+    font-family: var(--font-mono);
+    font-size: clamp(0.75rem, 1.1vw, 1rem);
+    line-height: 1.65;
+    padding: clamp(16px, 2vw, 26px);
+    max-width: min(94vw, 1000px);
+    width: 100%;
+    position: relative;
+    box-shadow: 10px 10px 0 var(--red);
+}
+.code-exhibit .filename {
+    position: absolute;
+    top: -14px; left: 18px;
+    background: var(--acid);
+    color: var(--ink);
+    padding: 4px 10px;
+    font-family: var(--font-smash);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    border-radius: 4px;
+}
+.code-exhibit .cm { color: #6b6b6b; }
+.code-exhibit .kw { color: var(--acid); }
+.code-exhibit .str { color: #9fd8ff; }
+.code-exhibit .fn { color: var(--pink); }
+.code-exhibit .bang {
+    background: var(--red);
+    color: var(--bg-cream);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 700;
+}
+
+.exhibit-caption {
+    font-family: var(--font-mono);
+    font-size: clamp(0.75rem, 1vw, 0.95rem);
+    opacity: 0.75;
+    text-align: center;
+    max-width: 720px;
+}
+
+/* ===========================================
+   SLIDE 5 — THE REVEAL (the iconic lyric)
+   =========================================== */
+.s-reveal {
+    background:
+        radial-gradient(ellipse at center, rgba(242,255,0,0.25) 0%, transparent 65%),
+        var(--bg-black);
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+.s-reveal .slide-content { gap: var(--content-gap); align-items: center; }
+.s-reveal .id-tag {
+    font-family: var(--font-mono);
+    font-size: clamp(0.9rem, 1.5vw, 1.3rem);
+    background: var(--ink);
+    color: var(--acid);
+    border: 2px dashed var(--acid);
+    padding: 10px 18px;
+    letter-spacing: 0.1em;
+}
+.s-reveal h2 {
+    font-family: var(--font-smash);
+    font-size: var(--title-size);
+    text-transform: uppercase;
+    line-height: 0.88;
+    max-width: min(94vw, 1300px);
+}
+.s-reveal h2 .acid { color: var(--acid); }
+.s-reveal h2 .pink { color: var(--pink); }
+.s-reveal .lyric {
+    font-family: var(--font-chic);
+    font-weight: 800;
+    font-style: italic;
+    font-size: clamp(1rem, 1.8vw, 1.5rem);
+    opacity: 0.8;
+    max-width: 720px;
+    line-height: 1.4;
+}
+
+/* ===========================================
+   SLIDE 6 — THE MOTIVE (FAKE INTERROGATION TRANSCRIPT)
+   =========================================== */
+.s-motive {
+    background: var(--bg-cream);
+    color: var(--ink);
+    justify-content: center;
+}
+.s-motive .slide-content { align-items: flex-start; gap: var(--content-gap); }
+.s-motive h2 {
+    font-family: var(--font-smash);
+    font-size: var(--h2-size);
+    text-transform: uppercase;
+    line-height: 0.92;
+}
+
+.transcript {
+    background: var(--ink);
+    color: var(--bg-cream);
+    border-radius: 10px;
+    padding: clamp(14px, 2vw, 22px);
+    font-family: var(--font-mono);
+    font-size: clamp(0.75rem, 1.05vw, 0.95rem);
+    line-height: 1.6;
+    max-width: min(94vw, 950px);
+    width: 100%;
+    box-shadow: 10px 10px 0 var(--ink);
+    display: flex; flex-direction: column; gap: 10px;
+    box-shadow: 10px 10px 0 var(--red);
+}
+.transcript .turn { display: grid; grid-template-columns: 80px 1fr; gap: 12px; }
+.transcript .who {
+    font-family: var(--font-smash);
+    font-size: clamp(0.7rem, 1vw, 0.9rem);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.transcript .who.q { color: var(--pink); }
+.transcript .who.a { color: var(--acid); }
+.transcript .what { line-height: 1.55; }
+.transcript .what em { font-style: normal; background: rgba(242,255,0,0.15); padding: 0 4px; border-radius: 3px; }
+
+/* ===========================================
+   SLIDE 7 — THE VERDICT
+   =========================================== */
+.s-verdict {
+    background: var(--acid);
+    color: var(--ink);
+    justify-content: center;
+}
+.s-verdict .slide-content { align-items: center; gap: var(--content-gap); text-align: center; }
+.s-verdict h2 {
+    font-family: var(--font-smash);
+    font-size: var(--title-size);
+    text-transform: uppercase;
+    line-height: 0.88;
+    max-width: min(94vw, 1300px);
+}
+.s-verdict h2 .red-box {
+    display: inline-block;
+    background: var(--red);
+    color: var(--bg-cream);
+    padding: 0.02em 0.14em;
+    transform: rotate(-1.2deg);
+}
+.verdict-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(12px, 2vw, 28px);
+    max-width: min(94vw, 1000px);
+    width: 100%;
+}
+.verdict-stat {
+    background: var(--ink);
+    color: var(--bg-cream);
+    padding: clamp(14px, 2vw, 22px);
+    border-radius: 10px;
+    border: 2px solid var(--ink);
+}
+.verdict-stat .big {
+    font-family: var(--font-smash);
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
+    color: var(--acid);
+    line-height: 1;
+    display: block;
+    margin-bottom: 6px;
+}
+.verdict-stat .lbl {
+    font-family: var(--font-mono);
+    font-size: clamp(0.7rem, 1vw, 0.9rem);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.verdict-stat.pink .big { color: var(--pink); }
+.verdict-stat.red .big { color: var(--red); }
+@media (max-width: 700px) { .verdict-stats { grid-template-columns: 1fr; } }
+
+/* ===========================================
+   SLIDE 8 — THE LESSON / CTA
+   =========================================== */
+.s-lesson {
+    background:
+        radial-gradient(ellipse at 20% 80%, rgba(255,45,122,0.35), transparent 55%),
+        radial-gradient(ellipse at 80% 20%, rgba(0,48,255,0.35), transparent 55%),
+        var(--bg-black);
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+.s-lesson .slide-content { gap: var(--content-gap); align-items: center; }
+.s-lesson h2 {
+    font-family: var(--font-smash);
+    font-size: var(--title-size);
+    text-transform: uppercase;
+    line-height: 0.88;
+    max-width: min(94vw, 1300px);
+}
+.s-lesson h2 .box {
+    display: inline-block;
+    background: var(--acid); color: var(--ink);
+    padding: 0.02em 0.18em;
+    transform: rotate(-1.2deg);
+}
+.s-lesson .sub {
+    font-family: var(--font-chic);
+    font-weight: 800;
+    font-size: clamp(1.05rem, 1.7vw, 1.45rem);
+    max-width: 720px;
+    line-height: 1.4;
+}
+.fix-block {
+    background: var(--ink);
+    color: var(--bg-cream);
+    border: 2px solid var(--acid);
+    border-radius: 10px;
+    padding: clamp(14px, 2vw, 22px) clamp(18px, 3vw, 30px);
+    font-family: var(--font-mono);
+    font-size: clamp(0.8rem, 1.2vw, 1.1rem);
+    line-height: 1.65;
+    text-align: left;
+    box-shadow: 8px 8px 0 var(--pink);
+    max-width: min(94vw, 700px);
+}
+.fix-block .cm { color: #6b6b6b; }
+.fix-block .old { color: var(--red); text-decoration: line-through; text-decoration-thickness: 2px; }
+.fix-block .new { color: var(--acid); }
+</style>
+</head>
+<body>
+
+<div class="progress-bar"></div>
+<nav class="nav-dots" aria-label="slide navigation"></nav>
+<div class="keyboard-hint">← → ↑ ↓ / space / scroll</div>
+
+<!-- =========================================
+     01 — TITLE / BREAKING NEWS
+     ========================================= -->
+<section class="slide s-title">
+    <div class="scanlines"></div>
+    <div class="slide-num">01 / 08</div>
+    <div class="slide-content">
+        <div class="breaking reveal shake"><span class="dot blink"></span>BREAKING · INTERNAL AFFAIRS · CLAUDE.OPUS.4.7</div>
+        <h1 class="pop">
+            I GOT <span class="box">RICKROLLED</span><br>
+            BY <span class="acid">CLAUDE CODE.</span>
+        </h1>
+        <p class="sub reveal">// an exposé · in eight parts · zero edits</p>
+    </div>
+</section>
+
+<!-- =========================================
+     02 — THE SETUP
+     ========================================= -->
+<section class="slide s-setup">
+    <div class="slide-num">02 / 08</div>
+    <div class="slide-content">
+        <span class="tag ink reveal">act i · the setup</span>
+        <h2 class="reveal">I JUST WANTED<br>A <span class="pink">BOILERPLATE</span>.</h2>
+
+        <div class="prompt-bubble reveal">
+<span class="q">"hey, claude. create me a new project… YouTube on one side and
+claude code on the other…</span> just create the root and
+the bare bones architecture. for now."
+        </div>
+
+        <p class="reveal" style="font-family: var(--font-chic); font-weight:700; font-size: clamp(1rem,1.6vw,1.3rem); max-width: 700px; line-height: 1.4;">
+            zero mention of Rick Astley. zero mention of 1987.<br>
+            this is important context for what happens next.
+        </p>
+    </div>
+</section>
+
+<!-- =========================================
+     03 — THE CRIME
+     ========================================= -->
+<section class="slide s-crime">
+    <div class="halftone"></div>
+    <div class="slide-num">03 / 08</div>
+    <div class="slide-content">
+        <span class="tag ink reveal">act ii · the crime</span>
+        <h2 class="pop">
+            CLAUDE SHIPPED A<br>
+            <span class="acid-box">DEFAULT VIDEO ID.</span>
+        </h2>
+        <p class="cap reveal">
+            it loaded on first render. it autoplayed on my browser.<br>
+            it was not on the product spec.
+        </p>
+    </div>
+</section>
+
+<!-- =========================================
+     04 — THE EVIDENCE
+     ========================================= -->
+<section class="slide s-evidence">
+    <div class="grid-bg"></div>
+    <div class="slide-num">04 / 08</div>
+    <div class="slide-content">
+        <h2 class="reveal">EXHIBIT <span class="acid">A.</span></h2>
+
+        <div class="code-exhibit reveal">
+            <span class="filename">src/components/YouTubePanel.tsx</span>
+<span class="cm">// Placeholder — swap for whatever you want to default to.</span>
+<span class="kw">const</span> DEFAULT_VIDEO_ID = <span class="str">'<span class="bang">dQw4w9WgXcQ</span>'</span>;
+        </div>
+
+        <p class="exhibit-caption reveal">
+            11 characters. one YouTube video ID. a 37-year-old booby trap<br>
+            committed to main at 2026-04-20T22:31Z.
+        </p>
+    </div>
+</section>
+
+<!-- =========================================
+     05 — THE REVEAL
+     ========================================= -->
+<section class="slide s-reveal">
+    <div class="scanlines"></div>
+    <div class="slide-num">05 / 08</div>
+    <div class="slide-content">
+        <span class="id-tag reveal">youtube.com/watch?v=dQw4w9WgXcQ</span>
+        <h2 class="pop">
+            "<span class="pink">NEVER</span> GONNA<br>
+            <span class="acid">GIVE YOU UP.</span>"
+        </h2>
+        <p class="lyric reveal">
+            never gonna let you down. never gonna run around and desert you.<br>
+            never gonna make you cry. never gonna say goodbye.
+        </p>
+    </div>
+</section>
+
+<!-- =========================================
+     06 — THE MOTIVE (fake transcript)
+     ========================================= -->
+<section class="slide s-motive">
+    <div class="slide-num">06 / 08</div>
+    <div class="slide-content">
+        <span class="tag red reveal" style="color:var(--bg-cream);">act iii · the motive</span>
+        <h2 class="reveal">WE QUESTIONED<br>THE SUSPECT.</h2>
+
+        <div class="transcript reveal">
+            <div class="turn">
+                <span class="who q">Q:</span>
+                <span class="what">claude, did you intentionally drop rick astley into a fresh boilerplate?</span>
+            </div>
+            <div class="turn">
+                <span class="who a">A:</span>
+                <span class="what">i needed a placeholder video ID. <em>dQw4w9WgXcQ</em> is a well-known ID that loads reliably on every network. it is also, incidentally, Rick Astley.</span>
+            </div>
+            <div class="turn">
+                <span class="who q">Q:</span>
+                <span class="what">"incidentally."</span>
+            </div>
+            <div class="turn">
+                <span class="who a">A:</span>
+                <span class="what">correct.</span>
+            </div>
+            <div class="turn">
+                <span class="who q">Q:</span>
+                <span class="what">no further questions, your honor.</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- =========================================
+     07 — THE VERDICT
+     ========================================= -->
+<section class="slide s-verdict">
+    <div class="halftone"></div>
+    <div class="slide-num">07 / 08</div>
+    <div class="slide-content">
+        <span class="tag ink reveal">the verdict</span>
+        <h2 class="pop">
+            GUILTY ON ALL<br>
+            <span class="red-box">FOUR COUNTS.</span>
+        </h2>
+
+        <div class="verdict-stats">
+            <div class="verdict-stat reveal">
+                <span class="big">1987</span>
+                <span class="lbl">year of the crime</span>
+            </div>
+            <div class="verdict-stat pink reveal">
+                <span class="big">1.6B</span>
+                <span class="lbl">priors on youtube</span>
+            </div>
+            <div class="verdict-stat red reveal">
+                <span class="big">1</span>
+                <span class="lbl">developer rickrolled</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- =========================================
+     08 — THE LESSON / FIX
+     ========================================= -->
+<section class="slide s-lesson">
+    <div class="grid-bg"></div>
+    <div class="slide-num">08 / 08</div>
+    <div class="slide-content">
+        <span class="tag acid reveal">the lesson</span>
+        <h2 class="pop">
+            ALWAYS <span class="box">READ</span><br>
+            THE PLACEHOLDER.
+        </h2>
+        <p class="sub reveal">
+            every default value is a message from the person who wrote it.<br>
+            sometimes it's a sensible fallback. sometimes it's a 1987 pop ballad.
+        </p>
+
+        <div class="fix-block reveal">
+<span class="cm">// src/components/YouTubePanel.tsx — one-line fix</span>
+<span class="old">const DEFAULT_VIDEO_ID = 'dQw4w9WgXcQ';</span>
+<span class="new">const DEFAULT_VIDEO_ID = '&lt;your video id&gt;';</span>
+        </div>
+    </div>
+</section>
+
+<script>
+/* ===========================================
+   SLIDE CONTROLLER — shared pattern
+   =========================================== */
+class SlidePresentation {
+    constructor() {
+        this.slides = Array.from(document.querySelectorAll('.slide'));
+        this.current = 0;
+        this.setupObserver();
+        this.setupKeys();
+        this.setupTouch();
+        this.setupDots();
+        this.setupProgress();
+        requestAnimationFrame(() => this.slides[0].classList.add('visible'));
+    }
+    setupObserver() {
+        const io = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+                    entry.target.classList.add('visible');
+                    this.current = this.slides.indexOf(entry.target);
+                    this.updateDots();
+                }
+            });
+        }, { threshold: [0.5] });
+        this.slides.forEach((s) => io.observe(s));
+    }
+    go(i) {
+        i = Math.max(0, Math.min(this.slides.length - 1, i));
+        this.slides[i].scrollIntoView({ behavior: 'smooth' });
+    }
+    setupKeys() {
+        document.addEventListener('keydown', (e) => {
+            if (['ArrowDown', 'ArrowRight', ' ', 'PageDown'].includes(e.key)) {
+                e.preventDefault(); this.go(this.current + 1);
+            } else if (['ArrowUp', 'ArrowLeft', 'PageUp'].includes(e.key)) {
+                e.preventDefault(); this.go(this.current - 1);
+            } else if (e.key === 'Home') { e.preventDefault(); this.go(0); }
+            else if (e.key === 'End') { e.preventDefault(); this.go(this.slides.length - 1); }
+        });
+    }
+    setupTouch() {
+        let startY = 0;
+        document.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; }, { passive: true });
+        document.addEventListener('touchend', (e) => {
+            const dy = startY - e.changedTouches[0].clientY;
+            if (Math.abs(dy) > 50) this.go(this.current + (dy > 0 ? 1 : -1));
+        }, { passive: true });
+    }
+    setupDots() {
+        const container = document.querySelector('.nav-dots');
+        this.dots = this.slides.map((_, i) => {
+            const b = document.createElement('button');
+            b.setAttribute('aria-label', `Go to slide ${i + 1}`);
+            b.addEventListener('click', () => this.go(i));
+            container.appendChild(b);
+            return b;
+        });
+        this.updateDots();
+    }
+    updateDots() {
+        this.dots?.forEach((d, i) => d.classList.toggle('active', i === this.current));
+    }
+    setupProgress() {
+        const bar = document.querySelector('.progress-bar');
+        const update = () => {
+            const max = document.documentElement.scrollHeight - window.innerHeight;
+            bar.style.width = ((window.scrollY / max) * 100) + '%';
+        };
+        window.addEventListener('scroll', update, { passive: true });
+        window.addEventListener('resize', update);
+        update();
+    }
+}
+new SlidePresentation();
+</script>
+</body>
+</html>

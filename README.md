@@ -25,19 +25,31 @@ src/
 player and pauses on `thinking`/`streaming`, plays on `idle`. That's the whole
 "auto-pause when Claude talks" feature — one ref, one effect.
 
+### Claude wiring (scrappy edition)
+
+`vite.config.ts` includes a dev-server plugin that exposes `/api/chat`. It
+shells out to your local `claude` CLI (`claude -p "<prompt>"`) and returns
+the reply. No API key, no env file — it uses whatever auth you already have
+on your machine.
+
+One-turn-at-a-time: the frontend sends the full conversation history as one
+prompt, Claude replies, done. No streaming, no sessions persisted server-side.
+
 ### What's stubbed
 
-- `ClaudePanel.mockClaudeCall` returns a canned reply. Replace with the
-  Claude Agent SDK (or a `/api/chat` proxy to the Anthropic API).
-- Sessions live in React state only — no persistence yet.
-- Session titles aren't renamable yet.
+- Session persistence — React state only, lost on refresh.
+- Renaming / deleting sessions.
+- Streaming tokens (today the reply lands in one chunk).
 
 ## Run it
 
+Prereqs: **Node 18+**, **pnpm** (or npm), and the `claude` CLI
+(`npm install -g @anthropic-ai/claude-code`) logged in (`claude` once, pick
+`/login`).
+
 ```
-pnpm install   # or npm install
+pnpm install
 pnpm dev       # vite on :5175
 ```
 
-The YouTube IFrame API is loaded via `<script>` in `index.html`, so no extra
-setup needed.
+Open http://localhost:5175.

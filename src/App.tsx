@@ -46,10 +46,31 @@ export function App() {
     setActiveSessionId(id);
   }, []);
 
+  const deleteSession = useCallback(
+    (id: string) => {
+      const next = sessions.filter((s) => s.id !== id);
+      if (next.length === 0) {
+        // Never leave the UI empty — spin up a fresh session immediately.
+        const fresh: Session = {
+          id: `s-${Date.now()}`,
+          title: 'new session',
+          messages: [],
+          updatedAt: Date.now(),
+        };
+        setSessions([fresh]);
+        setActiveSessionId(fresh.id);
+        return;
+      }
+      setSessions(next);
+      if (id === activeSessionId) setActiveSessionId(next[0].id);
+    },
+    [sessions, activeSessionId],
+  );
+
   const handleStatusChange = useCallback((status: AssistantStatus) => {
-    // YouTube pause/resume hook: when Claude starts responding, pause the video.
-    // When the assistant goes idle (i.e. user's turn again), resume.
-    if (status === 'thinking' || status === 'streaming') {
+    // The video should PLAY while Claude is working (keeps you entertained)
+    // and PAUSE the moment Claude goes idle (so you can read the reply).
+    if (status === 'idle') {
       ytRef.current?.pause();
     } else {
       ytRef.current?.play();
@@ -63,6 +84,7 @@ export function App() {
         activeSessionId={activeSession.id}
         onSelect={setActiveSessionId}
         onCreate={createSession}
+        onDelete={deleteSession}
       />
       <main className="workspace">
         <YouTubePanel ref={ytRef} />

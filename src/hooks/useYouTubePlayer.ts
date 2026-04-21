@@ -36,13 +36,15 @@ export function useYouTubePlayer(videoId: string) {
     const el = containerRef.current;
     if (!el) return;
 
+    let cancelled = false;
+
     const init = () => {
-      if (!window.YT || !containerRef.current) return;
+      if (cancelled || !window.YT?.Player || !containerRef.current) return;
       playerRef.current = new window.YT.Player(containerRef.current, {
         videoId,
         playerVars: { rel: 0, modestbranding: 1 },
         events: {
-          onReady: () => setReady(true),
+          onReady: () => { if (!cancelled) setReady(true); },
         },
       });
     };
@@ -56,12 +58,25 @@ export function useYouTubePlayer(videoId: string) {
         init();
       };
     }
+
+    return () => {
+      // StrictMode double-invokes effects. Drop the stale player so the next
+      // run starts from a clean ref instead of calling methods on a ghost.
+      cancelled = true;
+      playerRef.current = null;
+    };
   }, [videoId]);
 
-  return {
-    containerRef,
-    ready,
-    play: () => playerRef.current?.playVideo(),
-    pause: () => playerRef.current?.pauseVideo(),
+  // Guard both methods: the YT API is async, and StrictMode can leave
+  // playerRef pointing at a partially-initialized object.
+  const play = () => {
+    const p = playerRef.current;
+    if (p && typeof p.playVideo === 'function') p.playVideo();
   };
+  const pause = () => {
+    const p = playerRef.current;
+    if (p && typeof p.pauseVideo === 'function') p.pauseVideo();
+  };
+
+  return { containerRef, ready, play, pause };
 }
