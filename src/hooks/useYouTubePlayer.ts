@@ -20,31 +20,34 @@ declare global {
 export interface YTPlayer {
   playVideo: () => void;
   pauseVideo: () => void;
+  loadVideoById?: (id: string) => void;
   getPlayerState: () => number;
 }
 
 /**
  * Loads the YouTube IFrame API and attaches a player to `containerRef`.
- * Returns a ref-like handle with play/pause.
+ * - The player is created once on mount.
+ * - Subsequent videoId changes call `loadVideoById` instead of re-creating
+ *   the iframe (the old way was creating multiple ghost players).
  */
-export function useYouTubePlayer(videoId: string) {
+export function useYouTubePlayer(initialVideoId: string) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const playerRef = useRef<YTPlayer | null>(null);
+  const currentVideoIdRef = useRef(initialVideoId);
   const [ready, setReady] = useState(false);
 
+  // Create the player exactly once. StrictMode double-invokes this effect,
+  // so we guard with playerRef.current and do not destroy on cleanup.
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    let cancelled = false;
+    if (!containerRef.current || playerRef.current) return;
 
     const init = () => {
-      if (cancelled || !window.YT?.Player || !containerRef.current) return;
+      if (!window.YT?.Player || !containerRef.current || playerRef.current) return;
       playerRef.current = new window.YT.Player(containerRef.current, {
-        videoId,
+        videoId: currentVideoIdRef.current,
         playerVars: { rel: 0, modestbranding: 1 },
         events: {
-          onReady: () => { if (!cancelled) setReady(true); },
+          onReady: () => setReady(true),
         },
       });
     };
@@ -58,17 +61,19 @@ export function useYouTubePlayer(videoId: string) {
         init();
       };
     }
+  }, []);
 
-    return () => {
-      // StrictMode double-invokes effects. Drop the stale player so the next
-      // run starts from a clean ref instead of calling methods on a ghost.
-      cancelled = true;
-      playerRef.current = null;
-    };
-  }, [videoId]);
+  // Swap videos using loadVideoById once the player is ready.
+  useEffect(() => {
+    if (!ready) return;
+    if (currentVideoIdRef.current === initialVideoId) return;
+    const p = playerRef.current;
+    if (p && typeof p.loadVideoById === 'function') {
+      p.loadVideoById(initialVideoId);
+      currentVideoIdRef.current = initialVideoId;
+    }
+  }, [initialVideoId, ready]);
 
-  // Guard both methods: the YT API is async, and StrictMode can leave
-  // playerRef pointing at a partially-initialized object.
   const play = () => {
     const p = playerRef.current;
     if (p && typeof p.playVideo === 'function') p.playVideo();

@@ -1,34 +1,63 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { YouTubePanel, type YouTubePanelHandle } from './components/YouTubePanel';
 import { ClaudePanel } from './components/ClaudePanel';
 import type { AssistantStatus, Session } from './types';
 
+const STORAGE_KEY = 'cc-yt-sessions-v1';
+const ACTIVE_KEY = 'cc-yt-active-v1';
+
 const seedSessions: Session[] = [
   {
     id: 's-1',
-    title: 'learn react hooks',
+    title: 'new session',
     messages: [],
     updatedAt: Date.now(),
   },
-  {
-    id: 's-2',
-    title: 'refactor flashcard slider',
-    messages: [],
-    updatedAt: Date.now() - 60_000,
-  },
-  {
-    id: 's-3',
-    title: 'scratch',
-    messages: [],
-    updatedAt: Date.now() - 120_000,
-  },
 ];
 
+function loadPersisted(): { sessions: Session[]; activeId: string | null } {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const activeRaw = localStorage.getItem(ACTIVE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Session[];
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return { sessions: parsed, activeId: activeRaw };
+      }
+    }
+  } catch {
+    // ignore corrupt storage, fall back to seed
+  }
+  return { sessions: seedSessions, activeId: null };
+}
+
 export function App() {
-  const [sessions, setSessions] = useState<Session[]>(seedSessions);
-  const [activeSessionId, setActiveSessionId] = useState<string>(seedSessions[0].id);
+  const initial = useMemo(loadPersisted, []);
+  const [sessions, setSessions] = useState<Session[]>(initial.sessions);
+  const [activeSessionId, setActiveSessionId] = useState<string>(
+    initial.activeId && initial.sessions.some((s) => s.id === initial.activeId)
+      ? initial.activeId
+      : initial.sessions[0].id,
+  );
   const ytRef = useRef<YouTubePanelHandle>(null);
+
+  // Persist on every change — throttling isn't worth it for this scale.
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+    } catch {
+      // Quota exceeded or private mode — silently skip.
+    }
+  }, [sessions]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(ACTIVE_KEY, activeSessionId);
+    } catch {
+      // ignore
+    }
+  }, [activeSessionId]);
 
   const activeSession = useMemo(
     () => sessions.find((s) => s.id === activeSessionId) ?? sessions[0],
@@ -50,7 +79,6 @@ export function App() {
     (id: string) => {
       const next = sessions.filter((s) => s.id !== id);
       if (next.length === 0) {
-        // Never leave the UI empty — spin up a fresh session immediately.
         const fresh: Session = {
           id: `s-${Date.now()}`,
           title: 'new session',
@@ -68,8 +96,7 @@ export function App() {
   );
 
   const handleStatusChange = useCallback((status: AssistantStatus) => {
-    // The video should PLAY while Claude is working (keeps you entertained)
-    // and PAUSE the moment Claude goes idle (so you can read the reply).
+    // The video plays while Claude is working, pauses the moment Claude goes idle.
     if (status === 'idle') {
       ytRef.current?.pause();
     } else {
