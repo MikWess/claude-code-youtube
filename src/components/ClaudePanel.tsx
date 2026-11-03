@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { submitPermission } from '../api-contract';
 import type {
   AssistantStatus,
   Message,
@@ -70,7 +71,8 @@ export function ClaudePanel({ session, onUpdateSession, onStatusChange }: Props)
   };
 
   const respondToPermission = async (msg: PermissionMessage, allow: boolean) => {
-    // Optimistically update the bubble so the user sees the decision stick.
+    await submitPermission(msg.requestId, allow);
+    // Resolve only after the server has accepted the decision.
     onUpdateSession(session.id, (s) => ({
       ...s,
       messages: s.messages.map((m) =>
@@ -79,15 +81,7 @@ export function ClaudePanel({ session, onUpdateSession, onStatusChange }: Props)
           : m,
       ),
     }));
-    try {
-      await fetch('/api/permission-response', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requestId: msg.requestId, allow }),
-      });
-    } catch {
-      // The subprocess will hang if this fails. For scrappy, we let the user retry.
-    }
+
   };
 
   return (
@@ -143,7 +137,7 @@ function MessageView({
   onPermission,
 }: {
   message: Message;
-  onPermission: (m: PermissionMessage, allow: boolean) => void;
+  onPermission: (m: PermissionMessage, allow: boolean) => Promise<void>;
 }) {
   switch (message.kind) {
     case 'text':
@@ -207,8 +201,18 @@ function PermissionView({
   onRespond,
 }: {
   message: PermissionMessage;
-  onRespond: (m: PermissionMessage, allow: boolean) => void;
+  onRespond: (m: PermissionMessage, allow: boolean) => Promise<void>;
 }) {
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const submit = async (allow: boolean) => {
+    if (submitting) return;
+    setSubmitting(true);
+    setError('');
+    try { await onRespond(message, allow); }
+    catch (failure) { setError(failure instanceof Error ? failure.message : 'Could not send your decision. Try again.'); }
+    finally { setSubmitting(false); }
+  };
   const summary = summarizeInput(message.input);
   return (
     <div className={`claude-perm claude-perm--${message.status}`}>
@@ -219,17 +223,20 @@ function PermissionView({
         </span>
       </div>
       {summary && <div className="claude-perm-summary">{summary}</div>}
+      {error && <div role="alert" className="claude-perm-error">{error}</div>}
       {message.status === 'pending' ? (
         <div className="claude-perm-actions">
           <button
             className="claude-perm-btn claude-perm-btn--allow"
-            onClick={() => onRespond(message, true)}
+            disabled={submitting}
+            onClick={() => void submit(true)}
           >
             allow
           </button>
           <button
             className="claude-perm-btn claude-perm-btn--deny"
-            onClick={() => onRespond(message, false)}
+            disabled={submitting}
+            onClick={() => void submit(false)}
           >
             deny
           </button>

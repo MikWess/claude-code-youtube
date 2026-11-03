@@ -1,55 +1,51 @@
-# claude-code-youtube
+# Claude Code + YouTube
 
-YouTube on one side, Claude Code on the other. The video pauses when Claude
-starts responding and resumes when you send the next prompt.
+A local workspace with YouTube beside a Claude coding conversation. Video plays while Claude is thinking or streaming, then pauses when the response finishes so you can review it.
 
-## Architecture
+## Three useful workflows
 
-```
-src/
-  App.tsx                 shell: sidebar + workspace (yt | claude)
-  App.css                 slack-ish palette + split layout
-  types.ts                Session / Message / AssistantStatus
-  components/
-    Sidebar.tsx           slack-style session list + "new" button
-    YouTubePanel.tsx      YT IFrame API wrapper, URL loader, pause/resume handle
-    ClaudePanel.tsx       chat UI, emits AssistantStatus -> drives YT
-  hooks/
-    useYouTubePlayer.ts   loads iframe_api, returns { play, pause }
-```
+1. **Watch while a coding task runs.** Load a YouTube URL, start playback, then ask Claude to inspect or explain code. The player resumes during work and pauses when Claude becomes idle. Review the result before the next request.
+2. **Work beside a tutorial.** Keep a lesson visible while asking questions about code you paste or files Claude can access. Review each proposed tool action in the permission card. Claude receives your chat text, **not** the video, audio, or transcript; paste the relevant excerpt yourself.
+3. **Keep separate task conversations.** Create sessions in the sidebar for different topics and return to them later in the same browser. Sessions and message history persist in browser localStorage; clearing site data removes them. SDK processes are started per request, rather than resumed as persistent SDK sessions.
 
-### Pause/resume wiring
+## Run locally
 
-`ClaudePanel` owns an `AssistantStatus` (`idle | thinking | streaming`) and calls
-`onStatusChange` on every transition. `App.tsx` holds a ref to the YouTube
-player and pauses on `thinking`/`streaming`, plays on `idle`. That's the whole
-"auto-pause when Claude talks" feature — one ref, one effect.
+Requires Node.js 22.13+ (also used by the no-key tests), pnpm, and the Claude Code CLI installed and authenticated (`claude` must be on your PATH). Installing this repository’s SDK dependency does not install a global CLI. Use your own checkout or a disposable coding workspace when granting tool access.
 
-### Claude wiring (scrappy edition)
-
-`vite.config.ts` includes a dev-server plugin that exposes `/api/chat`. It
-shells out to your local `claude` CLI (`claude -p "<prompt>"`) and returns
-the reply. No API key, no env file — it uses whatever auth you already have
-on your machine.
-
-One-turn-at-a-time: the frontend sends the full conversation history as one
-prompt, Claude replies, done. No streaming, no sessions persisted server-side.
-
-### What's stubbed
-
-- Session persistence — React state only, lost on refresh.
-- Renaming / deleting sessions.
-- Streaming tokens (today the reply lands in one chunk).
-
-## Run it
-
-Prereqs: **Node 18+**, **pnpm** (or npm), and the `claude` CLI
-(`npm install -g @anthropic-ai/claude-code`) logged in (`claude` once, pick
-`/login`).
-
-```
-pnpm install
-pnpm dev       # vite on :5175
+```sh
+git clone https://github.com/MikWess/claude-code-youtube.git
+cd claude-code-youtube
+pnpm install --frozen-lockfile
+claude  # complete your normal login if not already authenticated
+pnpm dev
 ```
 
-Open http://localhost:5175.
+Open **http://127.0.0.1:5175**. The Vite server binds to loopback. If that port is occupied, stop the other process or choose a different port with `pnpm dev --port 5176`.
+
+Claude usage follows the local account's authentication and limits. A real conversation can invoke tools and consume usage; `pnpm test` and `pnpm build` do neither.
+
+## First run
+
+1. Add a session, then paste a direct YouTube URL into the player or try the search.
+2. Start the player once if your browser blocks automatic playback.
+3. Send a small text-only request first. When you request tool work, inspect its name and arguments before choosing **allow** or **deny**.
+4. If a permission decision fails to reach the server, the card stays pending and shows an error so you can retry. A stale card after a server restart may have no pending request; send a fresh task rather than repeatedly approving it.
+
+Video search uses a public Piped API instance and may be unavailable. Direct YouTube URLs avoid that search dependency, though YouTube itself still needs network access.
+
+## Checks and architecture
+
+```sh
+pnpm test
+pnpm build
+```
+
+- `src/App.tsx`: session persistence and playback/status coordination.
+- `src/components/ClaudePanel.tsx`: streamed SDK messages and permission cards.
+- `src/components/YouTubePanel.tsx`: player and search UI.
+- `src/api-contract.ts`: request validation and acknowledged permission submission.
+- `vite.config.ts`: local Agent SDK and video-search middleware.
+
+The chat endpoint streams newline-delimited JSON. Permission replies require a boolean decision; malformed chat requests are rejected before reaching the SDK.
+
+**`pnpm preview` and a static `dist/` deployment do not include the chat/search API.** Keep using `pnpm dev` for the complete local app. This is a single-user local prototype, without hosted authentication, durable server sessions, or a production deployment configuration. Do not expose the development server to other users or assume tool approval cards form a complete security boundary.

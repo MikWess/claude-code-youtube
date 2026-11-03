@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { parseChatBody, parsePermissionBody } from './src/api-contract';
 import { query } from '@anthropic-ai/claude-agent-sdk';
 
 // ============================================================
@@ -27,11 +28,11 @@ const claudeApi = {
 
       let messages: { role: string; text: string }[];
       try {
-        ({ messages } = JSON.parse(body));
+        messages = parseChatBody(JSON.parse(body));
       } catch {
         res.statusCode = 400;
         res.setHeader('Content-Type', 'application/x-ndjson');
-        res.end(JSON.stringify({ type: 'error', message: 'invalid json body' }) + '\n');
+        res.end(JSON.stringify({ type: 'error', message: 'invalid chat body: expected user/assistant text messages' }) + '\n');
         return;
       }
 
@@ -82,7 +83,7 @@ const claudeApi = {
       req.on('end', () => {
         res.setHeader('Content-Type', 'application/json');
         try {
-          const { requestId, allow } = JSON.parse(body) as { requestId: string; allow: boolean };
+          const { requestId, allow } = parsePermissionBody(JSON.parse(body));
           const resolve = pendingPermissions.get(requestId);
           if (!resolve) {
             res.statusCode = 404;
@@ -90,7 +91,7 @@ const claudeApi = {
             return;
           }
           pendingPermissions.delete(requestId);
-          resolve(!!allow);
+          resolve(allow);
           res.end(JSON.stringify({ ok: true }));
         } catch (e: any) {
           res.statusCode = 400;
@@ -150,5 +151,5 @@ const ytSearch = {
 
 export default defineConfig({
   plugins: [react(), claudeApi, ytSearch],
-  server: { port: 5175 },
+  server: { host: '127.0.0.1', port: 5175, strictPort: true },
 });
